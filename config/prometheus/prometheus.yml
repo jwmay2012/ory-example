@@ -1,0 +1,29 @@
+global:
+  scrape_interval: 5s
+  scrape_timeout: 5s
+
+scrape_configs:
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  - job_name: 'grafana'
+    static_configs:
+      - targets: [ 'grafana:3000' ]
+
+  - job_name: 'traefik'
+    static_configs:
+      - targets: [ 'traefik:9000' ]
+
+  - job_name: "docker-containers"
+    docker_sd_configs:
+      - host: unix:///var/run/docker.sock
+    relabel_configs:
+      # Only keep containers that have a `prometheus-job` label.
+      - source_labels: [ __meta_docker_container_label_prometheus_job ]
+        regex: .+
+        action: keep
+      # Use the task labels that are prefixed by `prometheus-`.
+      - regex: __meta_docker_container_label_prometheus_(.+)
+        action: labelmap
+        replacement: $1
