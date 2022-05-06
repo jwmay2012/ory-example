@@ -5,7 +5,7 @@
     url: "http://kratos:4433"
     strip_path: /.ory/kratos/public
   match:
-    url: "http://oathkeeper.localhost:9000/.ory/kratos/public/<**>"
+    url: "http://ui.localhost:9000/.ory/kratos/public/<**>"
     methods:
       - GET
       - POST
@@ -21,12 +21,12 @@
     - handler: noop
 
 -
-  id: "ory:kssui:anonymous"
+  id: "ory:ui:anonymous"
   upstream:
     preserve_host: true
-    url: "http://kssui:3000"
+    url: "http://ui:3000"
   match:
-    url: "http://oathkeeper.localhost:9000/<{registration,welcome,recovery,verification,login,error,**.css,**.js,**.png,}>"
+    url: "http://ui.localhost:9000/<{registration*,welcome,recovery*,verification*,login*,error,**.css,**.js,**.png,}>"
     methods:
       - GET
   authenticators:
@@ -39,12 +39,12 @@
       handler: noop
 
 -
-  id: "ory:kssui:protected"
+  id: "ory:ui:protected"
   upstream:
     preserve_host: true
-    url: "http://kssui:3000"
+    url: "http://ui:3000"
   match:
-    url: "http://oathkeeper.localhost:9000/<{debug,dashboard,settings}>"
+    url: "http://ui.localhost:9000/<{debug*,dashboard,settings*}>"
     methods:
       - GET
   authenticators:
@@ -57,4 +57,4 @@
   errors:
     - handler: redirect
       config:
-        to: http://kssui.localhost:9000/login
+        to: http://ui.localhost:9000/login

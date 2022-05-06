@@ -110,34 +110,43 @@ services:
       - kratos-migrate
     links:
       - postgres-kratos:postgres-kratos
-    environment:
-      - DSN=postgres://kratos:secret@postgres-kratos:5432/kratos?sslmode=disable&max_conns=20&max_idle_conns=4
-      - LOG_LEVEL=trace
-      - SERVE_PUBLIC_BASE_URL=http://oathkeeper.localhost:9000/.ory/kratos/public/
-#    ports:
-#      - '4433:4433'
-#      - '4434:4434'
     volumes:
       - ./config/kratos:/etc/config/kratos
     networks:
       - intranet
       - traefik-public
     command: serve -c /etc/config/kratos/kratos.yml --dev --watch-courier
+    environment:
+      - DSN=postgres://kratos:secret@postgres-kratos:5432/kratos?sslmode=disable&max_conns=20&max_idle_conns=4
+      - LOG_LEVEL=trace
+#      - SERVE_PUBLIC_BASE_URL=http://kratos.localhost:9000/
+      - SERVE_PUBLIC_BASE_URL=http://ui.localhost:9000/.ory/kratos/public/
     labels:
       - traefik.enable=true
       - traefik.docker.network=traefik-public
       - traefik.http.routers.kratos.rule=Host(`kratos.localhost`)
+      - traefik.http.routers.kratos.rule=Host(`ui.localhost`) && PathPrefix(`/.ory/kratos/public/`)
+      - traefik.http.middlewares.kratos-strip.stripprefix.prefixes=/.ory/kratos/public/
+
       - traefik.http.routers.kratos.entrypoints=http
-      - traefik.http.routers.kratos.middlewares=oathkeeper
+      - traefik.http.routers.kratos.middlewares=oathkeeper,kratos-strip
+      - traefik.http.routers.kratos.service=kratos
       - traefik.http.services.kratos.loadbalancer.server.port=4433
 
-  kssui:
-    image: oryd/kratos-selfservice-ui-node:v0.9.0-alpha.3
+      - traefik.http.routers.kratos-admin.rule=Host(`kratos-admin.localhost`)
+      - traefik.http.routers.kratos-admin.entrypoints=http
+      - traefik.http.routers.kratos-admin.service=kratos-admin
+#      - traefik.http.routers.kratos-admin.middlewares=oathkeeper
+      - traefik.http.services.kratos-admin.loadbalancer.server.port=4434
+
+  ui:
     environment:
       - SECURITY_MODE=jwks
       - JWKS_URL=http://oathkeeper:4456/.well-known/jwks.json
-      - KRATOS_BROWSER_URL=http://oathkeeper.localhost:9000/.ory/kratos/public
+#      - KRATOS_BROWSER_URL=http://kratos.localhost:9000/
+      - KRATOS_BROWSER_URL=http://ui.localhost:9000/.ory/kratos/public
       - KRATOS_PUBLIC_URL=http://kratos:4433/
+    image: oryd/kratos-selfservice-ui-node:v0.9.0-alpha.3
     networks:
       - intranet
       - traefik-public
@@ -145,17 +154,14 @@ services:
     labels:
       - traefik.enable=true
       - traefik.docker.network=traefik-public
-      - traefik.http.routers.kssui.rule=Host(`kssui.localhost`)
-      - traefik.http.routers.kssui.entrypoints=http
-      - traefik.http.routers.kssui.middlewares=oathkeeper
+      - traefik.http.routers.ui.rule=Host(`ui.localhost`) && !PathPrefix(`/.ory/kratos/public/`)
+      - traefik.http.routers.ui.entrypoints=http
+      - traefik.http.routers.ui.middlewares=oathkeeper
 
   oathkeeper:
     image: oryd/oathkeeper:v0.38
     depends_on:
       - kratos
-#    ports:
-#      - 8080:4455
-#      - 4456:4456
     command:
       serve proxy -c "/etc/config/oathkeeper/oathkeeper.yml"
     environment:
@@ -169,30 +175,24 @@ services:
     labels:
       - traefik.enable=true
       - traefik.docker.network=traefik-public
-      - traefik.http.routers.oathkeeper.rule=Host(`oathkeeper.localhost`)
-      - traefik.http.routers.oathkeeper.entrypoints=http
-      - traefik.http.services.oathkeeper.loadbalancer.server.port=4455
+      - traefik.http.routers.oathkeeper-proxy.rule=Host(`oathkeeper-proxy.localhost`)
+      - traefik.http.routers.oathkeeper-proxy.entrypoints=http
+      - traefik.http.routers.oathkeeper-proxy.service=oathkeeper-proxy
+      - traefik.http.services.oathkeeper-proxy.loadbalancer.server.port=4455
 
-#  kratos-selfservice-ui-node:
-#    image: oryd/kratos-selfservice-ui-node:latest
-#    environment:
-#      - KRATOS_PUBLIC_URL=http://kratos:4433/
-#      - KRATOS_BROWSER_URL=http://127.0.0.1:4433/
-#    networks:
-#      - intranet
-#    ports:
-#      - "4455:3000"
-#    restart: on-failure
-#
-#
-#  mailslurper:
-#    image: oryd/mailslurper:latest-smtps
+      - traefik.http.routers.oathkeeper-api.rule=Host(`oathkeeper-api.localhost`)
+      - traefik.http.routers.oathkeeper-api.entrypoints=http
+      - traefik.http.routers.oathkeeper-api.service=oathkeeper-api
+      - traefik.http.services.oathkeeper-api.loadbalancer.server.port=4456
+
+  mailslurper:
+    image: oryd/mailslurper:latest-smtps
 #    ports:
 #      - '4436:4436'
 #      - '4437:4437'
-#    networks:
-#      - intranet
-#
+    networks:
+      - intranet
+
 #  postgres-keto:
 #    image: postgres:9.6
 #    environment:
@@ -273,7 +273,6 @@ services:
 
 volumes:
 #  kratos-sqlite:
-  traefik: {}
   grafana_data: {}
   prometheus_data: {}
 

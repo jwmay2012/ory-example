@@ -4,7 +4,7 @@ dsn: memory
 
 serve:
   public:
-    base_url: http://kratos.localhost:9000/
+    base_url: http://ui.localhost:9000/
     cors:
       enabled: true
       allowed_origins:
@@ -24,12 +24,12 @@ serve:
         - Content-Type
         - Set-Cookie
   admin:
-    base_url: http://kratos:4434/
+    base_url: http://kratos-admin.localhost:9000/
 
 selfservice:
-  default_browser_return_url: http://oathkeeper.localhost:9000/
+  default_browser_return_url: http://ui.localhost:9000/
   allowed_return_urls:
-    - http://oathkeeper.localhost:9000
+    - http://ui.localhost:9000
 
   methods:
     password:
@@ -37,33 +37,33 @@ selfservice:
 
   flows:
     error:
-      ui_url: http://oathkeeper.localhost:9000/error
+      ui_url: http://ui.localhost:9000/error
 
     settings:
-      ui_url: http://oathkeeper.localhost:9000/settings
+      ui_url: http://ui.localhost:9000/settings
       privileged_session_max_age: 15m
 
     recovery:
       enabled: true
-      ui_url: http://oathkeeper.localhost:9000/recovery
+      ui_url: http://ui.localhost:9000/recovery
 
     verification:
       enabled: true
-      ui_url: http://oathkeeper.localhost:9000/verification
+      ui_url: http://ui.localhost:9000/verification
       after:
-        default_browser_return_url: http://oathkeeper.localhost:9000/
+        default_browser_return_url: http://ui.localhost:9000/
 
     logout:
       after:
-        default_browser_return_url: http://oathkeeper.localhost:9000/login
+        default_browser_return_url: http://ui.localhost:9000/login
 
     login:
-      ui_url: http://oathkeeper.localhost:9000/login
+      ui_url: http://ui.localhost:9000/login
       lifespan: 10m
 
     registration:
       lifespan: 10m
-      ui_url: http://oathkeeper.localhost:9000/registration
+      ui_url: http://ui.localhost:9000/registration
       after:
         password:
           hooks:
