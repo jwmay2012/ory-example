@@ -11,16 +11,15 @@ services:
       - traefik.enable=true
       - traefik.docker.network=traefik-public
 
-      - traefik.http.routers.traefik.rule=Host(`traefik.localhost`)
-      - traefik.http.routers.traefik.entrypoints=http
+      - traefik.http.routers.traefik.rule=Host(`traefik.ory.localhost`)
+      - traefik.http.routers.traefik.entrypoints=https
+      - traefik.http.routers.traefik.tls=true
       - traefik.http.routers.traefik.service=api@internal
 
-      - traefik.http.routers.traefik-metrics.rule=(Host(`traefik.localhost`) || Host(`traefik`)) && Path(`/metrics`)
-      - traefik.http.routers.traefik-metrics.entrypoints=http
+      - traefik.http.routers.traefik-metrics.rule=(Host(`traefik.ory.localhost`) || Host(`traefik`)) && Path(`/metrics`)
+      - traefik.http.routers.traefik-metrics.entrypoints=https
+      - traefik.http.routers.traefik-metrics.tls=true
       - traefik.http.routers.traefik-metrics.service=prometheus@internal
-
-      - traefik.http.middlewares.oathkeeper.forwardauth.address=http://oathkeeper:4456/decisions
-      - traefik.http.middlewares.oathkeeper.forwardauth.authResponseHeaders=X-Id-Token,Authorization
 
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
@@ -28,12 +27,16 @@ services:
       - target: 9000
         published: 9000
         mode: host
+      - target: 443
+        published: 443
+        mode: host
     command:
       - --global.sendAnonymousUsage=false
       - --serverstransport.insecureskipverify=true
       - --providers.docker
       - --providers.docker.exposedbydefault=false
       - --entrypoints.http.address=:9000
+      - --entrypoints.https.address=:443
 
       - --accesslog
       - --log
@@ -57,8 +60,9 @@ services:
     labels:
       - traefik.enable=true
       - traefik.docker.network=traefik-public
-      - traefik.http.routers.prometheus.rule=Host(`prometheus.localhost`)
-      - traefik.http.routers.prometheus.entrypoints=http
+      - traefik.http.routers.prometheus.rule=Host(`prometheus.ory.localhost`)
+      - traefik.http.routers.prometheus.entrypoints=https
+      - traefik.http.routers.prometheus.tls=true
 
   grafana:
     image: grafana/grafana
@@ -70,8 +74,9 @@ services:
       - ./config/grafana/provisioning/:/etc/grafana/provisioning/
     labels:
       - traefik.enable=true
-      - traefik.http.routers.grafana.rule=Host(`grafana.localhost`)
-      - traefik.http.routers.grafana.entrypoints=http
+      - traefik.http.routers.grafana.rule=Host(`grafana.ory.localhost`)
+      - traefik.http.routers.grafana.entrypoints=https
+      - traefik.http.routers.grafana.tls=true
   whoami:
     image: traefik/whoami
     networks:
@@ -79,8 +84,9 @@ services:
     labels:
       - traefik.enable=true
       - traefik.docker.network=traefik-public
-      - traefik.http.routers.whoami.rule=Host(`whoami.localhost`)
-      - traefik.http.routers.whoami.entrypoints=http
+      - traefik.http.routers.whoami.rule=Host(`whoami.ory.localhost`)
+      - traefik.http.routers.whoami.entrypoints=https
+      - traefik.http.routers.whoami.tls=true
 #      - traefik.http.routers.whoami.middlewares=oathkeeper
 
   postgres-kratos:
@@ -115,36 +121,39 @@ services:
     networks:
       - intranet
       - traefik-public
-    command: serve -c /etc/config/kratos/kratos.yml --dev --watch-courier
+    command: serve -c /etc/config/kratos/kratos.yml --watch-courier
     environment:
       - DSN=postgres://kratos:secret@postgres-kratos:5432/kratos?sslmode=disable&max_conns=20&max_idle_conns=4
       - LOG_LEVEL=trace
-#      - SERVE_PUBLIC_BASE_URL=http://kratos.localhost:9000/
-      - SERVE_PUBLIC_BASE_URL=http://ui.localhost:9000/.ory/kratos/public/
+      - SERVE_PUBLIC_BASE_URL=https://kratos.ory.localhost/
+#      - SERVE_PUBLIC_BASE_URL=http://kratos.ory.localhost:9000/
+#      - SERVE_PUBLIC_BASE_URL=http://ui.ory.localhost:9000/.ory/kratos/public/
     labels:
       - traefik.enable=true
       - traefik.docker.network=traefik-public
-      - traefik.http.routers.kratos.rule=Host(`kratos.localhost`)
-      - traefik.http.routers.kratos.rule=Host(`ui.localhost`) && PathPrefix(`/.ory/kratos/public/`)
+      - traefik.http.routers.kratos.rule=Host(`kratos.ory.localhost`) || (Host(`ui.ory.localhost`) && PathPrefix(`/.ory/kratos/public/`))
       - traefik.http.middlewares.kratos-strip.stripprefix.prefixes=/.ory/kratos/public/
 
-      - traefik.http.routers.kratos.entrypoints=http
-      - traefik.http.routers.kratos.middlewares=oathkeeper,kratos-strip
+      - traefik.http.routers.kratos.entrypoints=https
+      - traefik.http.routers.kratos.tls=true
+#      - traefik.http.routers.kratos.middlewares=oathkeeper,kratos-strip
       - traefik.http.routers.kratos.service=kratos
       - traefik.http.services.kratos.loadbalancer.server.port=4433
 
-      - traefik.http.routers.kratos-admin.rule=Host(`kratos-admin.localhost`)
-      - traefik.http.routers.kratos-admin.entrypoints=http
+      - traefik.http.routers.kratos-admin.rule=Host(`kratos-admin.ory.localhost`)
+      - traefik.http.routers.kratos-admin.entrypoints=https
+      - traefik.http.routers.kratos-admin.tls=true
       - traefik.http.routers.kratos-admin.service=kratos-admin
-#      - traefik.http.routers.kratos-admin.middlewares=oathkeeper
+      - traefik.http.routers.kratos-admin.middlewares=oathkeeper
       - traefik.http.services.kratos-admin.loadbalancer.server.port=4434
 
   ui:
     environment:
       - SECURITY_MODE=jwks
       - JWKS_URL=http://oathkeeper:4456/.well-known/jwks.json
-#      - KRATOS_BROWSER_URL=http://kratos.localhost:9000/
-      - KRATOS_BROWSER_URL=http://ui.localhost:9000/.ory/kratos/public
+      - KRATOS_BROWSER_URL=https://kratos.ory.localhost/
+#      - KRATOS_BROWSER_URL=http://kratos.ory.localhost:9000/
+#      - KRATOS_BROWSER_URL=http://ui.ory.localhost:9000/.ory/kratos/public
       - KRATOS_PUBLIC_URL=http://kratos:4433/
     image: oryd/kratos-selfservice-ui-node:v0.9.0-alpha.3
     networks:
@@ -154,8 +163,9 @@ services:
     labels:
       - traefik.enable=true
       - traefik.docker.network=traefik-public
-      - traefik.http.routers.ui.rule=Host(`ui.localhost`) && !PathPrefix(`/.ory/kratos/public/`)
-      - traefik.http.routers.ui.entrypoints=http
+      - traefik.http.routers.ui.rule=Host(`ui.ory.localhost`) && !PathPrefix(`/.ory/kratos/public/`)
+      - traefik.http.routers.ui.entrypoints=https
+      - traefik.http.routers.ui.tls=true
       - traefik.http.routers.ui.middlewares=oathkeeper
 
   oathkeeper:
@@ -175,15 +185,20 @@ services:
     labels:
       - traefik.enable=true
       - traefik.docker.network=traefik-public
-      - traefik.http.routers.oathkeeper-proxy.rule=Host(`oathkeeper-proxy.localhost`)
-      - traefik.http.routers.oathkeeper-proxy.entrypoints=http
+      - traefik.http.routers.oathkeeper-proxy.rule=Host(`oathkeeper-proxy.ory.localhost`)
+      - traefik.http.routers.oathkeeper-proxy.entrypoints=https
+      - traefik.http.routers.oathkeeper-proxy.tls=true
       - traefik.http.routers.oathkeeper-proxy.service=oathkeeper-proxy
       - traefik.http.services.oathkeeper-proxy.loadbalancer.server.port=4455
 
-      - traefik.http.routers.oathkeeper-api.rule=Host(`oathkeeper-api.localhost`)
-      - traefik.http.routers.oathkeeper-api.entrypoints=http
+      - traefik.http.routers.oathkeeper-api.rule=Host(`oathkeeper-api.ory.localhost`)
+      - traefik.http.routers.oathkeeper-api.entrypoints=https
+      - traefik.http.routers.oathkeeper-api.tls=true
       - traefik.http.routers.oathkeeper-api.service=oathkeeper-api
       - traefik.http.services.oathkeeper-api.loadbalancer.server.port=4456
+
+      - traefik.http.middlewares.oathkeeper.forwardauth.address=http://oathkeeper:4456/decisions
+      - traefik.http.middlewares.oathkeeper.forwardauth.authResponseHeaders=X-Id-Token,Authorization
 
   mailslurper:
     image: oryd/mailslurper:latest-smtps

@@ -16,9 +16,11 @@ serve:
         - DELETE
       allowed_headers:
         - Authorization
+        - Cookie
         - Content-Type
       exposed_headers:
         - Content-Type
+        - Set-Cookie
       allow_credentials: true
       debug: true
 
@@ -30,7 +32,7 @@ errors:
     redirect:
       enabled: true
       config:
-        to: http://ui.localhost:9000/login
+        to: https://ui.ory.localhost/login
         when:
           -
             error:
@@ -80,7 +82,7 @@ mutators:
   id_token:
     enabled: true
     config:
-      issuer_url: http://ui.localhost:9000/
+      issuer_url: https://ui.ory.localhost/
       jwks_url: file:///etc/config/oathkeeper/id_token.jwks.json
       claims: |
         {

@@ -4,12 +4,14 @@ dsn: memory
 
 serve:
   public:
-    base_url: http://ui.localhost:9000/
+    base_url: https://kratos.ory.localhost/
     cors:
       enabled: true
       allowed_origins:
-        - http://localhost
-        - http://*.localhost
+        - https://localhost
+        - https://kratos.ory.localhost
+        - http://kratos
+        - https://*.ory.localhost
       allowed_methods:
         - POST
         - GET
@@ -24,12 +26,12 @@ serve:
         - Content-Type
         - Set-Cookie
   admin:
-    base_url: http://kratos-admin.localhost:9000/
+    base_url: https://kratos-admin.ory.localhost/
 
 selfservice:
-  default_browser_return_url: http://ui.localhost:9000/
+  default_browser_return_url: https://ui.ory.localhost/
   allowed_return_urls:
-    - http://ui.localhost:9000
+    - https://ui.ory.localhost
 
   methods:
     password:
@@ -37,38 +39,46 @@ selfservice:
 
   flows:
     error:
-      ui_url: http://ui.localhost:9000/error
+      ui_url: https://ui.ory.localhost/error
 
     settings:
-      ui_url: http://ui.localhost:9000/settings
+      ui_url: https://ui.ory.localhost/settings
       privileged_session_max_age: 15m
 
     recovery:
       enabled: true
-      ui_url: http://ui.localhost:9000/recovery
+      ui_url: https://ui.ory.localhost/recovery
 
     verification:
       enabled: true
-      ui_url: http://ui.localhost:9000/verification
+      ui_url: https://ui.ory.localhost/verification
       after:
-        default_browser_return_url: http://ui.localhost:9000/
+        default_browser_return_url: https://ui.ory.localhost/
 
     logout:
       after:
-        default_browser_return_url: http://ui.localhost:9000/login
+        default_browser_return_url: https://ui.ory.localhost/login
 
     login:
-      ui_url: http://ui.localhost:9000/login
+      ui_url: https://ui.ory.localhost/login
       lifespan: 10m
 
     registration:
       lifespan: 10m
-      ui_url: http://ui.localhost:9000/registration
+      ui_url: https://ui.ory.localhost/registration
       after:
         password:
           hooks:
             -
               hook: session
+cookies:
+  domain: ory.localhost
+  same_site: Lax
+
+session:
+  cookie:
+    domain: ory.localhost
+    same_site: Lax
 
 log:
   level: debug

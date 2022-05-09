@@ -1,11 +1,53 @@
 -
-  id: "ory:kratos:public"
+  id: "ory:kratos-ui:public"
   upstream:
     preserve_host: true
     url: "http://kratos:4433"
     strip_path: /.ory/kratos/public
   match:
-    url: "http://ui.localhost:9000/.ory/kratos/public/<**>"
+    url: "http://ui.ory.localhost:9000/.ory/kratos/public/<**>"
+    methods:
+      - GET
+      - POST
+      - PUT
+      - DELETE
+      - PATCH
+  authenticators:
+    -
+      handler: noop
+  authorizer:
+    handler: allow
+  mutators:
+    - handler: noop
+
+-
+  id: "ory:kratos:public"
+  upstream:
+    preserve_host: true
+    url: "http://kratos:4433"
+  match:
+    url: "http://kratos.ory.localhost:9000/<**>"
+    methods:
+      - GET
+      - POST
+      - PUT
+      - DELETE
+      - PATCH
+  authenticators:
+    -
+      handler: noop
+  authorizer:
+    handler: allow
+  mutators:
+    - handler: noop
+
+-
+  id: "ory:kratos:public"
+  upstream:
+    preserve_host: true
+    url: "http://kratos:4433"
+  match:
+    url: "https://kratos.ory.localhost/<**>"
     methods:
       - GET
       - POST
@@ -26,7 +68,7 @@
     preserve_host: true
     url: "http://ui:3000"
   match:
-    url: "http://ui.localhost:9000/<{registration*,welcome,recovery*,verification*,login*,error,**.css,**.js,**.png,}>"
+    url: "http://ui.ory.localhost:9000/<{registration*,welcome,recovery*,verification*,login*,error,**.css,**.js,**.png,}>"
     methods:
       - GET
   authenticators:
@@ -44,7 +86,7 @@
     preserve_host: true
     url: "http://ui:3000"
   match:
-    url: "http://ui.localhost:9000/<{debug*,dashboard,settings*}>"
+    url: "http://ui.ory.localhost:9000/<{debug*,dashboard,settings*}>"
     methods:
       - GET
   authenticators:
@@ -57,4 +99,44 @@
   errors:
     - handler: redirect
       config:
-        to: http://ui.localhost:9000/login
+        to: http://ui.ory.localhost:9000/login
+
+
+-
+  id: "ory:ui-https:anonymous"
+  upstream:
+    preserve_host: true
+    url: "http://ui:3000"
+  match:
+    url: "https://ui.ory.localhost/<{registration*,welcome,recovery*,verification*,login*,error,**.css,**.js,**.png,}>"
+    methods:
+      - GET
+  authenticators:
+    -
+      handler: anonymous
+  authorizer:
+    handler: allow
+  mutators:
+    -
+      handler: noop
+
+-
+  id: "ory:ui-https:protected"
+  upstream:
+    preserve_host: true
+    url: "http://ui:3000"
+  match:
+    url: "https://ui.ory.localhost/<{debug*,dashboard,settings*}>"
+    methods:
+      - GET
+  authenticators:
+    -
+      handler: cookie_session
+  authorizer:
+    handler: allow
+  mutators:
+    - handler: id_token
+  errors:
+    - handler: redirect
+      config:
+        to: https://ui.ory.localhost/login

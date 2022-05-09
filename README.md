@@ -1,9 +1,12 @@
-Port `9000` must be free
+Port `443` must be free
 
 `docker compose up`
 
-http://ui.localhost:9000  
-http://traefik.localhost:9000  
-http://prometheus.localhost:9000  
-http://whoami.localhost:9000  
-http://grafana.localhost:9000  
+https://ui.ory.localhost  
+https://traefik.ory.localhost  
+https://prometheus.ory.localhost  
+https://whoami.ory.localhost  
+https://grafana.ory.localhost  
+
+
+Ignore and Proceed with invalid certificates
