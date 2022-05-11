@@ -1,47 +1,4 @@
 -
-  id: "ory:kratos-ui:public"
-  upstream:
-    preserve_host: true
-    url: "http://kratos:4433"
-    strip_path: /.ory/kratos/public
-  match:
-    url: "http://ui.ory.localhost:9000/.ory/kratos/public/<**>"
-    methods:
-      - GET
-      - POST
-      - PUT
-      - DELETE
-      - PATCH
-  authenticators:
-    -
-      handler: noop
-  authorizer:
-    handler: allow
-  mutators:
-    - handler: noop
-
--
-  id: "ory:kratos:public"
-  upstream:
-    preserve_host: true
-    url: "http://kratos:4433"
-  match:
-    url: "http://kratos.ory.localhost:9000/<**>"
-    methods:
-      - GET
-      - POST
-      - PUT
-      - DELETE
-      - PATCH
-  authenticators:
-    -
-      handler: noop
-  authorizer:
-    handler: allow
-  mutators:
-    - handler: noop
-
--
   id: "ory:kratos:public"
   upstream:
     preserve_host: true
@@ -55,15 +12,14 @@
       - DELETE
       - PATCH
   authenticators:
-    -
-      handler: noop
+    - handler: noop
   authorizer:
     handler: allow
   mutators:
     - handler: noop
 
 -
-  id: "ory:ui:anonymous"
+  id: "ory:ui:anon"
   upstream:
     preserve_host: true
     url: "http://ui:3000"
@@ -72,8 +28,7 @@
     methods:
       - GET
   authenticators:
-    -
-      handler: anonymous
+    - handler: anonymous
   authorizer:
     handler: allow
   mutators:
@@ -112,8 +67,7 @@
     methods:
       - GET
   authenticators:
-    -
-      handler: anonymous
+    - handler: anonymous
   authorizer:
     handler: allow
   mutators:
@@ -136,6 +90,32 @@
     handler: allow
   mutators:
     - handler: id_token
+  errors:
+    - handler: redirect
+      config:
+        to: https://ui.ory.localhost/login
+
+-
+  id: "ory:whoami-https:protected"
+  upstream:
+    preserve_host: true
+    url: "http://whoami:80"
+  match:
+    url: "https://whoami.ory.localhost/<**>"
+    methods:
+      - GET
+      - POST
+  authenticators:
+    - handler: cookie_session
+  authorizer:
+    handler: allow
+  mutators:
+    - handler: id_token
+    - handler: header
+      config:
+        headers:
+          X-Id: '{{ print .Subject }}'
+          X-Email: '{{ print .Extra.identity.traits.email }}'
   errors:
     - handler: redirect
       config:

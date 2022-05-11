@@ -12,8 +12,11 @@ scrape_configs:
       - targets: [ 'grafana:3000' ]
 
   - job_name: 'traefik'
+    scheme: https
+    tls_config:
+      insecure_skip_verify: true
     static_configs:
-      - targets: [ 'traefik:9000' ]
+      - targets: [ 'traefik:443' ]
 
   - job_name: "docker-containers"
     docker_sd_configs:
