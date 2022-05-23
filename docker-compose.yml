@@ -27,13 +27,16 @@ services:
       - target: 443
         published: 443
         mode: host
+      - target: 50000
+        published: 50000
+        mode: host
     command:
       - --global.sendAnonymousUsage=false
       - --serverstransport.insecureskipverify=true
       - --providers.docker
       - --providers.docker.exposedbydefault=false
-      - --entrypoints.http.address=:9000
       - --entrypoints.https.address=:443
+      - --entrypoints.spicedb.address=:50000
 
       - --accesslog
       - --log
@@ -269,6 +272,40 @@ services:
       - traefik.http.routers.keto-write.tls=true
       - traefik.http.routers.keto-write.service=keto-write
       - traefik.http.services.keto-write.loadbalancer.server.port=4467
+
+  spicedb:
+    image: authzed/spicedb
+    networks:
+      - intranet
+      - traefik-public
+    command: serve --grpc-preshared-key "blah" --http-enabled
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=traefik-public
+      - traefik.tcp.routers.spicedb-grpc
+      - traefik.tcp.routers.spicedb-grpc.rule=HostSNI(`*`)
+      - traefik.tcp.routers.spicedb-grpc.entrypoints=spicedb
+      - traefik.tcp.routers.spicedb-grpc.service=spicedb-grpc
+      - traefik.tcp.services.spicedb-grpc.loadbalancer.server.port=50051
+
+      - traefik.http.routers.spicedb-http.rule=Host(`spicedb-http.ory.localhost`)
+      - traefik.http.routers.spicedb-http.entrypoints=https
+      - traefik.http.routers.spicedb-http.tls=true
+      - traefik.http.routers.spicedb-http.service=spicedb-http
+      - traefik.http.services.spicedb-http.loadbalancer.server.port=8443
+
+      - traefik.http.routers.spicedb-dashboard.rule=Host(`spicedb-dashboard.ory.localhost`)
+      - traefik.http.routers.spicedb-dashboard.entrypoints=https
+      - traefik.http.routers.spicedb-dashboard.tls=true
+      - traefik.http.routers.spicedb-dashboard.service=spicedb-dashboard
+      - traefik.http.services.spicedb-dashboard.loadbalancer.server.port=8080
+
+      - traefik.http.routers.spicedb-metrics.rule=Host(`spicedb-metrics.ory.localhost`)
+      - traefik.http.routers.spicedb-metrics.entrypoints=https
+      - traefik.http.routers.spicedb-metrics.tls=true
+      - traefik.http.routers.spicedb-metrics.service=spicedb-metrics
+      - traefik.http.services.spicedb-metrics.loadbalancer.server.port=9090
+
 
 #  postgres-shorts:
 #    image: postgres:9.6
